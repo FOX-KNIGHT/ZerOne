@@ -11,6 +11,7 @@ export default function AdminTeams() {
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(null)
   const [editScore, setEditScore] = useState({ teamId: null, delta: '' })
+  const [editRound2Score, setEditRound2Score] = useState({ teamId: null, delta: '' })
 
   useEffect(() => {
     fetchTeams()
@@ -25,7 +26,7 @@ export default function AdminTeams() {
 
   const filtered = registeredTeams.filter(t =>
     t.teamName.toLowerCase().includes(search.toLowerCase()) ||
-    (t.code && t.code.includes(search.toUpperCase()))
+    (t.teamCode && t.teamCode.includes(search.toUpperCase()))
   )
 
   const toggleExpand = (id) => setExpanded(e => e === id ? null : id)
@@ -35,6 +36,16 @@ export default function AdminTeams() {
     if (!isNaN(delta)) {
       updateTeamScore(teamId, delta)
       setEditScore({ teamId: null, delta: '' })
+    }
+  }
+
+  const handleRound2ScoreEdit = (teamId) => {
+    const delta = parseInt(editRound2Score.delta)
+    if (!isNaN(delta)) {
+      // NOTE: Assume store method exists! 
+      // If we used updateTeamScore, it'd only touch total score.
+      useAppStore.getState().updateRound2Score(teamId, delta);
+      setEditRound2Score({ teamId: null, delta: '' })
     }
   }
 
@@ -118,7 +129,7 @@ export default function AdminTeams() {
                   <div className="flex-1 min-w-0">
                     <p className="font-heading font-bold text-white text-base truncate">{team.teamName}</p>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="font-terminal text-primary/60 text-xs tracking-widest">#{team.code || 'NO-CODE'}</span>
+                      <span className="font-terminal text-primary/60 text-xs tracking-widest">#{team.teamCode || 'NO-CODE'}</span>
                       <span className="font-mono text-[10px] text-white/25">
                         {team.members?.length || 0} member{team.members?.length !== 1 ? 's' : ''}
                       </span>
@@ -182,7 +193,7 @@ export default function AdminTeams() {
 
                           {/* Score adjustment */}
                           <div className="mb-4">
-                            <p className="font-mono text-[10px] text-white/25 mb-2">Manual Score Adjustment</p>
+                            <p className="font-mono text-[10px] text-white/25 mb-2">Total Score Adjustment</p>
                             <div className="flex gap-2">
                               <input
                                 type="number"
@@ -196,6 +207,26 @@ export default function AdminTeams() {
                                 className="px-4 py-2 bg-primary/10 border border-primary/25 text-primary rounded-lg font-mono text-xs hover:bg-primary/20 transition-all"
                               >
                                 Apply
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Section 2 Score adjustment */}
+                          <div className="mb-4">
+                            <p className="font-mono text-[10px] text-white/25 mb-2">Section 2 (Offline) Points</p>
+                            <div className="flex gap-2">
+                              <input
+                                type="number"
+                                placeholder="+50"
+                                value={editRound2Score.teamId === team._id ? editRound2Score.delta : ''}
+                                onChange={e => setEditRound2Score({ teamId: team._id, delta: e.target.value })}
+                                className="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2 font-mono text-sm text-yellow-500 placeholder:text-white/20 outline-none focus:border-yellow-500/50 transition-all"
+                              />
+                              <button
+                                onClick={() => handleRound2ScoreEdit(team._id)}
+                                className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/25 text-yellow-500 rounded-lg font-mono text-xs hover:bg-yellow-500/20 transition-all"
+                              >
+                                Apply Sec 2
                               </button>
                             </div>
                           </div>

@@ -102,6 +102,22 @@ router.post('/team/adjust-score', roleBasedAccess(['superadmin']), async (req, r
   }
 })
 
+router.post('/team/adjust-round2-score', roleBasedAccess(['superadmin']), async (req, res) => {
+  try {
+    const { teamId, amount } = req.body
+    // Section 2 grading should add to BOTH overall 'score' and 'round2Score' tracking
+    const team = await Team.findByIdAndUpdate(
+      teamId,
+      { $inc: { score: amount, round2Score: amount } },
+      { new: true }
+    )
+    req.app.get('io').emit('scoreUpdate')
+    res.json(team)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
 router.post('/team/disqualify', roleBasedAccess(['superadmin']), async (req, res) => {
   try {
     const { teamId } = req.body
@@ -125,4 +141,50 @@ router.post('/team/reinstate', roleBasedAccess(['superadmin']), async (req, res)
   }
 })
 
+router.post('/team/reset', roleBasedAccess(['superadmin']), async (req, res) => {
+  try {
+    const { teamId } = req.body
+    const team = await Team.findByIdAndUpdate(teamId, {
+      score: 0,
+      round2Score: 0,
+      round3Score: 0,
+      currentRound: 1,
+      isDisqualified: false
+    }, { new: true })
+    
+    if (team) {
+       req.app.get('io').emit('scoreUpdate')
+    }
+    res.json({ message: 'Team progress reset', team })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// ── Shortlist top N teams for Final Phase ─────────────────────────────────────
+router.post('/shortlist', roleBasedAccess(['superadmin', 'judge']), async (req, res) => {
+  try {
+    const limit = parseInt(req.body.limit) || 10
+
+    const topTeams = await Team.find({ isDisqualified: false })
+      .sort({ score: -1 })
+      .limit(limit)
+      .select('_id teamName score')
+
+    const topIds = topTeams.map(t => t._id)
+
+    await Team.updateMany({}, { isShortlisted: false })
+    await Team.updateMany({ _id: { $in: topIds } }, { isShortlisted: true })
+
+    req.app.get('io')?.emit('shortlistAnnounced', {
+      teams: topTeams.map((t, i) => ({ rank: i + 1, teamName: t.teamName, score: t.score })),
+    })
+
+    res.json({ message: `Top ${topTeams.length} teams shortlisted for Final Phase!`, teams: topTeams })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
 export default router
+

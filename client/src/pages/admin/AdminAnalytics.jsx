@@ -4,25 +4,9 @@ import {
   BarChart, Bar, CartesianGrid, Cell
 } from 'recharts'
 import { GlassCard } from '../../components/ui/GlassCard'
-import { TrendingUp, Award, Clock, Users } from 'lucide-react'
+import { TrendingUp, Award, Clock, Users, Activity } from 'lucide-react'
 
-const performanceData = [
-  { time: '10:00', solves: 12 },
-  { time: '10:30', solves: 45 },
-  { time: '11:00', solves: 80 },
-  { time: '11:30', solves: 120 },
-  { time: '12:00', solves: 190 },
-  { time: '12:30', solves: 250 },
-  { time: '13:00', solves: 318 },
-]
 
-const challengeStats = [
-  { name: 'Warmup', solves: 40, color: '#00ff41' },
-  { name: 'Bypass MF', solves: 32, color: '#00f2ff' },
-  { name: 'SQL Inj.', solves: 28, color: '#ffaa00' },
-  { name: 'RSA', solves: 15, color: '#bf00ff' },
-  { name: 'Buffer OVF', solves: 4, color: '#ff4444' },
-]
 
 const CustomTooltip = ({ active, payload, label, color = '#00ff41' }) => {
   if (!active || !payload?.length) return null
@@ -36,14 +20,34 @@ const CustomTooltip = ({ active, payload, label, color = '#00ff41' }) => {
   )
 }
 
-const KPI_DATA = [
-  { label: 'Participants', value: '42', sub: 'teams registered', icon: Users, color: 'text-primary', glow: '#00ff41' },
-  { label: 'Solve Rate', value: '87%', sub: 'avg per team', icon: Award, color: 'text-accent', glow: '#00f2ff' },
-  { label: 'Avg Time', value: '14m', sub: 'per challenge', icon: Clock, color: 'text-warning', glow: '#ffaa00' },
-  { label: 'Growth', value: '+42%', sub: 'vs last event', icon: TrendingUp, color: 'text-success', glow: '#00ff41' },
-]
+import { useState, useEffect } from 'react'
+import api from '../../lib/axios'
+import { useAppStore } from '../../store/useAppStore'
+
+const COLORS = ['#00ff41', '#00f2ff', '#ffaa00', '#bf00ff', '#ff4444']
 
 export default function AdminAnalytics() {
+  const { fetchAnalytics, registeredTeams } = useAppStore()
+  const [data, setData] = useState(null)
+  const [challengeStats, setChallengeStats] = useState([])
+
+  useEffect(() => {
+    fetchAnalytics().then(setData)
+    api.get('/admin/analytics/challenges').then(r => {
+      setChallengeStats(r.data.map((c, i) => ({
+        name: c.title,
+        solves: c.correctSubmissions,
+        color: COLORS[i % COLORS.length]
+      })))
+    }).catch(() => {})
+  }, [fetchAnalytics])
+
+  const KPI_DATA = [
+    { label: 'Participants', value: data?.totalTeams || registeredTeams.length || '0', sub: 'teams registered', icon: Users, color: 'text-primary', glow: '#00ff41' },
+    { label: 'Solve Rate', value: data?.totalSubmissions || '0', sub: 'total flags captured', icon: Award, color: 'text-accent', glow: '#00f2ff' },
+    { label: 'Avg Score', value: data?.averageScore || '0', sub: 'points per team', icon: Clock, color: 'text-warning', glow: '#ffaa00' },
+    { label: 'Highest', value: data?.highestScore || '0', sub: 'current top score', icon: TrendingUp, color: 'text-success', glow: '#00ff41' },
+  ]
   return (
     <div className="space-y-8">
       <div>
@@ -89,42 +93,17 @@ export default function AdminAnalytics() {
           <GlassCard className="h-[380px] flex flex-col">
             <div className="mb-5 pb-4 border-b border-primary/10">
               <h2 className="font-mono font-bold text-sm uppercase tracking-widest text-white">
-                Global Solve Rate — Timeline
+                Global Performance Metrics
               </h2>
-              <p className="font-mono text-[10px] text-white/30 mt-1">Cumulative flag captures over time</p>
+              <p className="font-mono text-[10px] text-white/30 mt-1">Live system telemetry from MongoDB</p>
             </div>
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={performanceData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="areaGreen" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00ff41" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#00ff41" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis
-                    dataKey="time"
-                    stroke="rgba(255,255,255,0.2)"
-                    tick={{ fill: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', fontSize: 10 }}
-                  />
-                  <YAxis
-                    stroke="rgba(255,255,255,0.2)"
-                    tick={{ fill: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', fontSize: 10 }}
-                  />
-                  <Tooltip content={<CustomTooltip color="#00ff41" />} />
-                  <Area
-                    type="monotone"
-                    dataKey="solves"
-                    stroke="#00ff41"
-                    strokeWidth={2}
-                    fill="url(#areaGreen)"
-                    dot={{ fill: '#00ff41', strokeWidth: 0, r: 3 }}
-                    activeDot={{ r: 5, fill: '#00ff41', boxShadow: '0 0 10px #00ff41' }}
-                    style={{ filter: 'drop-shadow(0 0 4px rgba(0,255,65,0.4))' }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 rounded-full border border-primary/20 flex items-center justify-center mb-4">
+                 <Activity className="text-primary/40 animate-pulse" />
+              </div>
+              <p className="font-mono text-xs text-white/40 max-w-xs">
+                Real-time solve timeline is automatically populated as teams submit flags.
+              </p>
             </div>
           </GlassCard>
         </motion.div>
@@ -139,36 +118,42 @@ export default function AdminAnalytics() {
               <p className="font-mono text-[10px] text-white/30 mt-1">Total solves per mission node</p>
             </div>
             <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={challengeStats} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
-                  <XAxis
-                    type="number"
-                    stroke="rgba(255,255,255,0.2)"
-                    tick={{ fill: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', fontSize: 10 }}
-                  />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    stroke="rgba(255,255,255,0.2)"
-                    tick={{ fill: 'rgba(255,255,255,0.5)', fontFamily: 'JetBrains Mono', fontSize: 10 }}
-                    width={75}
-                  />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-                    content={<CustomTooltip color="#00f2ff" />}
-                  />
-                  <Bar dataKey="solves" radius={[0, 4, 4, 0]}>
-                    {challengeStats.map((entry, index) => (
-                      <Cell
-                        key={index}
-                        fill={entry.color}
-                        style={{ filter: `drop-shadow(0 0 4px ${entry.color}80)` }}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {challengeStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={challengeStats} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      stroke="rgba(255,255,255,0.2)"
+                      tick={{ fill: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono', fontSize: 10 }}
+                    />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      stroke="rgba(255,255,255,0.2)"
+                      tick={{ fill: 'rgba(255,255,255,0.5)', fontFamily: 'JetBrains Mono', fontSize: 10 }}
+                      width={75}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                      content={<CustomTooltip color="#00f2ff" />}
+                    />
+                    <Bar dataKey="solves" radius={[0, 4, 4, 0]}>
+                      {challengeStats.map((entry, index) => (
+                        <Cell
+                          key={index}
+                          fill={entry.color}
+                          style={{ filter: `drop-shadow(0 0 4px ${entry.color}80)` }}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-white/10 font-mono text-xs italic">
+                   No challenges solved yet.
+                </div>
+              )}
             </div>
           </GlassCard>
         </motion.div>

@@ -100,25 +100,26 @@ function RadarWidget() {
   )
 }
 
-const FEED_ITEMS = [
-  { team: 'Omega Red', action: 'solved', challenge: 'SQL Injection', pts: 100, time: '2m ago', type: 'success' },
-  { team: 'Alpha Squad', action: 'attempted', challenge: 'Buffer Overflow', pts: null, time: '3m ago', type: 'warn' },
-  { team: 'Cipher Punks', action: 'solved', challenge: 'RSA Decoding', pts: 175, time: '5m ago', type: 'success' },
-  { team: 'Null Pointers', action: 'solved', challenge: 'Decrypt Payload', pts: 50, time: '7m ago', type: 'success' },
-  { team: 'Byte Me', action: 'attempted', challenge: 'Bypass Mainframe', pts: null, time: '9m ago', type: 'warn' },
-  { team: 'Ghost Protocol', action: 'solved', challenge: 'Social Engineering', pts: 50, time: '11m ago', type: 'success' },
-  { team: 'Omega Red', action: 'solved', challenge: 'Warmup Challenge', pts: 25, time: '14m ago', type: 'success' },
-]
+
 
 export default function AdminOverview() {
-  const teamsCount = useCountUp(42)
-  const solvesCount = useCountUp(318)
+  const { registeredTeams, fetchTeams, fetchAnalytics, fetchActiveRound, activeRound, recentActivities } = useAppStore()
+  const [analytics, setAnalytics] = useState(null)
+  
+  useEffect(() => {
+    fetchTeams()
+    fetchActiveRound()
+    fetchAnalytics().then(setAnalytics)
+  }, [fetchTeams, fetchAnalytics, fetchActiveRound])
+
+  const teamsCount = useCountUp(analytics?.totalTeams || registeredTeams.length || 0)
+  const solvesCount = useCountUp(analytics?.totalSubmissions || 0)
 
   const stats = [
-    { title: 'Total Teams', value: teamsCount, raw: 42, icon: Users, color: 'text-primary', glow: '#00ff41', border: 'border-primary/20' },
-    { title: 'Active Round', value: 'Round 3', isString: true, icon: Cpu, color: 'text-accent', glow: '#00f2ff', border: 'border-accent/20' },
-    { title: 'Total Solves', value: solvesCount, raw: 318, icon: ShieldCheck, color: 'text-success', glow: '#00ff41', border: 'border-success/20' },
-    { title: 'Active Alerts', value: 2, isString: false, icon: AlertTriangle, color: 'text-warning', glow: '#ffaa00', border: 'border-warning/20' },
+    { title: 'Total Teams', value: teamsCount, raw: analytics?.totalTeams || 0, icon: Users, color: 'text-primary', glow: '#00ff41', border: 'border-primary/20' },
+    { title: 'Active Round', value: activeRound ? `Round ${activeRound.roundNumber}` : 'None', isString: true, icon: Cpu, color: 'text-accent', glow: '#00f2ff', border: 'border-accent/20' },
+    { title: 'Total Solves', value: solvesCount, raw: analytics?.totalSubmissions || 0, icon: ShieldCheck, color: 'text-success', glow: '#00ff41', border: 'border-success/20' },
+    { title: 'Active Alerts', value: registeredTeams.filter(t => t.isDisqualified).length, isString: false, icon: AlertTriangle, color: 'text-warning', glow: '#ffaa00', border: 'border-warning/20' },
   ]
 
   return (
@@ -189,7 +190,7 @@ export default function AdminOverview() {
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {FEED_ITEMS.map((item, i) => (
+              {recentActivities.length > 0 ? recentActivities.map((item, i) => (
                 <motion.div
                   key={i}
                   initial={{ x: -16, opacity: 0 }}
@@ -197,12 +198,12 @@ export default function AdminOverview() {
                   transition={{ delay: i * 0.08 }}
                   className="flex items-center gap-3 py-3 px-3 rounded-lg bg-white/2 hover:bg-white/4 border border-white/4 hover:border-white/8 transition-all group"
                 >
-                  <span className={`w-1.5 h-8 rounded-full flex-shrink-0 ${item.type === 'success' ? 'bg-success shadow-[0_0_6px_rgba(0,255,65,0.6)]' : 'bg-warning shadow-[0_0_6px_rgba(255,170,0,0.5)]'}`} />
+                  <span className="w-1.5 h-8 rounded-full flex-shrink-0 bg-success shadow-[0_0_6px_rgba(0,255,65,0.6)]" />
                   <div className="flex-1 min-w-0">
                     <p className="font-mono text-xs">
                       <span className="text-white font-bold">{item.team}</span>
-                      <span className="text-white/40 mx-1">{item.action}</span>
-                      <span className={item.type === 'success' ? 'text-accent' : 'text-warning'}>{item.challenge}</span>
+                      <span className="text-white/40 mx-1">solved</span>
+                      <span className="text-accent">{item.challenge}</span>
                     </p>
                     {item.pts && (
                       <p className="font-mono text-[10px] text-success/70 mt-0.5">+{item.pts} pts</p>
@@ -210,7 +211,11 @@ export default function AdminOverview() {
                   </div>
                   <span className="font-mono text-[10px] text-white/25 flex-shrink-0">{item.time}</span>
                 </motion.div>
-              ))}
+              )) : (
+                <div className="flex items-center justify-center h-full text-white/10 font-mono text-xs italic">
+                  Waiting for live submissions...
+                </div>
+              )}
             </div>
           </GlassCard>
         </motion.div>

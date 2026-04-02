@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Database, Clock, Users, BarChart3, LogOut, ShieldAlert, ChevronRight, Wifi, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Database, Clock, Users, BarChart3, LogOut, ShieldAlert, ChevronRight, Wifi, Menu, X, Key } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { cn } from '../lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,11 +13,12 @@ export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navItems = [
-    { name: 'Overview', path: '/admin/overview', icon: LayoutDashboard },
-    { name: 'Challenges', path: '/admin/challenges', icon: Database },
-    { name: 'Round Control', path: '/admin/rounds', icon: Clock },
-    { name: 'Teams', path: '/admin/teams', icon: Users },
-    { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
+    { name: 'Overview',      path: '/admin/overview',       icon: LayoutDashboard },
+    { name: 'Challenges',    path: '/admin/challenges',     icon: Database },
+    { name: 'Round Control', path: '/admin/rounds',         icon: Clock },
+    { name: 'Teams',         path: '/admin/teams',          icon: Users },
+    { name: 'Analytics',     path: '/admin/analytics',      icon: BarChart3 },
+    { name: 'Cipher Config', path: '/admin/cipher-config',  icon: Key },
   ]
 
   const pageTitle = location.pathname.split('/').pop().replace(/-/g, ' ').toUpperCase()

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Target, Trophy, LogOut, Menu, X, Wifi } from 'lucide-react'
+import { LayoutDashboard, Trophy, LogOut, Menu, X, Wifi, BookOpen, Terminal, KeyRound, Cpu } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { cn } from '../lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,9 +12,12 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Challenges', path: '/challenges', icon: Target },
-    { name: 'Leaderboard', path: '/leaderboard', icon: Trophy },
+    { name: 'Dashboard',  path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Leaderboard',path: '/leaderboard',icon: Trophy },
+    { name: 'Phase 0',    path: '/phase0',    icon: BookOpen },
+    { name: 'Section 2',  path: '/dashboard', icon: Cpu,      badge: 'Offline' },
+    { name: 'Section 3',  path: '/section3',  icon: Terminal },
+    { name: 'Final',      path: '/final',     icon: KeyRound },
   ]
 
   const formatTimeShort = (s) => {

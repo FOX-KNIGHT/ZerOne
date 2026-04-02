@@ -43,4 +43,13 @@ router.get('/live', async (req, res) => {
   }
 })
 
+router.get('/round', async (req, res) => {
+  try {
+    const activeRound = await Round.findOne({ isActive: true })
+    res.json(activeRound)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
 export default router

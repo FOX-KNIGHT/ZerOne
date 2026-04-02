@@ -1,94 +1,48 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, KeySquare, HelpCircle, AlertTriangle, ShieldCheck, Terminal, Cpu, Lock } from 'lucide-react'
+import { ArrowLeft, KeySquare, HelpCircle, AlertTriangle, ShieldCheck, Terminal, Cpu, Lock, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { NeonInput } from '../components/ui/NeonInput'
 import { AnimatedButton } from '../components/ui/AnimatedButton'
 import { cn } from '../lib/utils'
-
-const CHALLENGE = {
-  id: 1,
-  title: 'Bypass Mainframe',
-  type: 'CTF',
-  points: 150,
-  status: 'active',
-  difficulty: 'Hard',
-  category: 'Exploit',
-  description: 'The central core requires an access token encoded in base64. It is encrypted behind a basic shift cipher. Find the key and unlock the matrix. The token was generated on a specific day — think carefully about the temporal offset.',
-  hint: 'Think Caesar but advanced. The shift is based on the day of the week the system was built.',
-  hintCost: 20,
-}
-
-// Particle burst on solve
-const SolvedOverlay = () => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-xl overflow-hidden"
-  >
-    {/* Particle rings */}
-    {[1, 2, 3].map(i => (
-      <motion.div
-        key={i}
-        className="absolute rounded-full border-2 border-success"
-        initial={{ scale: 0, opacity: 0.8 }}
-        animate={{ scale: i * 2, opacity: 0 }}
-        transition={{ delay: i * 0.15, duration: 1, ease: 'easeOut' }}
-        style={{ width: 60, height: 60 }}
-      />
-    ))}
-
-    <motion.div
-      initial={{ scale: 0, rotate: -20 }}
-      animate={{ scale: 1, rotate: 0 }}
-      transition={{ type: 'spring', bounce: 0.5, delay: 0.2 }}
-      className="w-20 h-20 rounded-full bg-success/20 border-2 border-success flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(0,255,65,0.4)]"
-    >
-      <ShieldCheck size={36} className="text-success" />
-    </motion.div>
-
-    <motion.h2
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.4 }}
-      className="font-heading font-black text-3xl text-success text-glow"
-    >
-      NODE COMPROMISED
-    </motion.h2>
-    <motion.p
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.6 }}
-      className="font-mono text-white/50 text-sm mt-2"
-    >
-      +{CHALLENGE.points} pts added to your team
-    </motion.p>
-  </motion.div>
-)
+import { useAppStore } from '../store/useAppStore'
 
 export default function ChallengeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { fetchChallengeById, submitChallenge, fetchHint, solvedChallenges } = useAppStore()
+  
+  const [challenge, setChallenge] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [flag, setFlag] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [solved, setSolved] = useState(false)
   const [showHintModal, setShowHintModal] = useState(false)
-  const [hintUnlocked, setHintUnlocked] = useState(false)
+  const [hint, setHint] = useState(null)
   const [attempts, setAttempts] = useState(0)
 
-  const handleSubmit = (e) => {
+  const isSolved = solvedChallenges.includes(id)
+
+  useEffect(() => {
+    fetchChallengeById(id).then(data => {
+      if (data) setChallenge(data)
+      setLoading(false)
+    })
+  }, [id, fetchChallengeById])
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
-    setTimeout(() => {
-      if (flag.toLowerCase() === 'zerone_core_hacked') {
-        setSolved(true)
+    
+    try {
+      const res = await submitChallenge(id, flag, !!hint)
+      if (res.isCorrect) {
         toast.success('FLAG ACCEPTED — Node compromised!', {
           style: { background: '#000', border: '1px solid rgba(0,255,65,0.5)', color: '#00ff41', fontFamily: 'JetBrains Mono' }
         })
       } else {
         setAttempts(a => a + 1)
-        toast.error('ACCESS DENIED — Invalid signature.', {
+        toast.error(res.message || 'ACCESS DENIED — Invalid signature.', {
           style: { background: '#000', border: '1px solid rgba(255,68,68,0.5)', color: '#ff4444', fontFamily: 'JetBrains Mono' }
         })
         const el = document.getElementById('flag-form')
@@ -97,18 +51,40 @@ export default function ChallengeDetail() {
           requestAnimationFrame(() => { el.style.animation = 'shake 0.5s ease-in-out' })
         }
       }
+    } catch (err) {
+      toast.error('System error during transmission.')
+    } finally {
       setSubmitting(false)
-    }, 1200)
+    }
   }
 
-  const unlockHint = () => {
-    setHintUnlocked(true)
-    setShowHintModal(false)
-    toast('Classified intel authorized. Points deducted.', {
-      icon: '⚠️',
-      style: { background: '#000', border: '1px solid rgba(255,170,0,0.5)', color: '#ffaa00', fontFamily: 'JetBrains Mono' }
-    })
+  const unlockHint = async () => {
+    const hintText = await fetchHint(id)
+    if (hintText) {
+      setHint(hintText)
+      setShowHintModal(false)
+      toast('Classified intel authorized. Points deducted.', {
+        icon: '⚠️',
+        style: { background: '#000', border: '1px solid rgba(255,170,0,0.5)', color: '#ffaa00', fontFamily: 'JetBrains Mono' }
+      })
+    } else {
+      toast.error('Failed to authorize intel access.')
+    }
   }
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <Loader2 size={48} className="text-primary animate-spin" />
+      <p className="font-mono text-primary/50 animate-pulse tracking-widest">DECRYPTING NODE DATA...</p>
+    </div>
+  )
+
+  if (!challenge) return (
+    <div className="text-center py-20">
+      <h2 className="font-terminal text-error text-4xl mb-4">NODE NOT FOUND</h2>
+      <AnimatedButton onClick={() => navigate('/challenges')}>Return to Dashboard</AnimatedButton>
+    </div>
+  )
 
   const diffColor = { Easy: 'text-success', Medium: 'text-warning', Hard: 'text-red-400', Extreme: 'text-red-600' }
 
@@ -145,20 +121,20 @@ export default function ChallengeDetail() {
             {/* Top badges */}
             <div className="flex flex-wrap items-center gap-2 mb-5">
               <span className="px-3 py-1 bg-accent/10 border border-accent/30 text-accent text-xs font-mono font-bold uppercase tracking-wider rounded">
-                {CHALLENGE.type}
+                {challenge.type}
               </span>
               <span className="px-3 py-1 bg-white/5 border border-white/10 text-white/50 text-xs font-mono uppercase tracking-wider rounded">
-                {CHALLENGE.category}
+                {challenge.category || 'General'}
               </span>
-              <span className={cn('px-3 py-1 bg-black/50 border border-white/10 text-xs font-mono font-bold uppercase tracking-wider rounded', diffColor[CHALLENGE.difficulty])}>
-                {CHALLENGE.difficulty}
+              <span className={cn('px-3 py-1 bg-black/50 border border-white/10 text-xs font-mono font-bold uppercase tracking-wider rounded', diffColor[challenge.difficulty || 'Medium'])}>
+                {challenge.difficulty || 'Medium'}
               </span>
             </div>
 
-            <h1 className="font-heading font-black text-3xl md:text-4xl text-white mb-2">{CHALLENGE.title}</h1>
+            <h1 className="font-heading font-black text-3xl md:text-4xl text-white mb-2">{challenge.title}</h1>
 
             <div className="flex items-center gap-4 mt-3">
-              <span className="font-mono font-black text-2xl text-primary text-glow">{CHALLENGE.points} PTS</span>
+              <span className="font-mono font-black text-2xl text-primary text-glow">{challenge.points} PTS</span>
               {attempts > 0 && (
                 <span className="font-mono text-xs text-red-400/70 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded">
                   {attempts} failed attempt{attempts > 1 ? 's' : ''}
@@ -180,15 +156,15 @@ export default function ChallengeDetail() {
               <Terminal size={12} className="ml-auto text-primary/30" />
             </div>
 
-            <div className="p-6 font-mono text-sm text-white/70 leading-relaxed">
+            <div className="p-6 font-mono text-sm text-white/70 leading-relaxed whitespace-pre-wrap">
               <span className="text-primary/50 mr-3">&gt;</span>
-              {CHALLENGE.description}
+              {challenge.description}
             </div>
           </div>
 
           {/* Hint system */}
           <AnimatePresence mode="wait">
-            {!hintUnlocked ? (
+            {!hint && !isSolved && challenge.hint?.text && (
               <motion.div key="hint-locked" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <button
                   onClick={() => setShowHintModal(true)}
@@ -196,10 +172,12 @@ export default function ChallengeDetail() {
                 >
                   <HelpCircle size={16} className="group-hover:animate-pulse" />
                   Request Classified Intel
-                  <span className="ml-auto text-xs opacity-60">−{CHALLENGE.hintCost} PTS</span>
+                  <span className="ml-auto text-xs opacity-60">−{challenge.hint.cost} PTS</span>
                 </button>
               </motion.div>
-            ) : (
+            )}
+            
+            {hint && (
               <motion.div
                 key="hint-revealed"
                 initial={{ height: 0, opacity: 0 }}
@@ -211,7 +189,7 @@ export default function ChallengeDetail() {
                   <AlertTriangle size={15} className="text-warning" />
                   <span className="font-mono text-xs text-warning uppercase tracking-widest font-bold">Classified Intel</span>
                 </div>
-                <p className="font-mono text-sm text-white/80 leading-relaxed">{CHALLENGE.hint}</p>
+                <p className="font-mono text-sm text-white/80 leading-relaxed">{hint}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -225,12 +203,24 @@ export default function ChallengeDetail() {
           transition={{ delay: 0.2 }}
         >
           <div className="relative border border-primary/20 bg-black/80 rounded-xl overflow-hidden backdrop-blur-md sticky top-24">
-            {solved && <SolvedOverlay />}
+            {isSolved && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md rounded-xl overflow-hidden"
+              >
+                <div className="w-20 h-20 rounded-full bg-success/20 border-2 border-success flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(0,255,65,0.4)]">
+                  <ShieldCheck size={36} className="text-success" />
+                </div>
+                <h2 className="font-heading font-black text-3xl text-success text-glow">NODE COMPROMISED</h2>
+                <p className="font-mono text-white/50 text-sm mt-2">+{challenge.points} pts added to your team</p>
+              </motion.div>
+            )}
 
             {/* Terminal header */}
             <div className="flex items-center gap-2 px-5 py-3 border-b border-primary/15 bg-primary/5">
               <Cpu size={14} className="text-primary" />
-              <span className="font-mono text-xs text-primary/60">flag_submission.sh</span>
+              <span className="font-mono text-xs text-primary/60">{challenge.type === 'flag' ? 'flag_submission.sh' : 'mcq_verification.sh'}</span>
               <div className="ml-auto flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span className="font-mono text-[10px] text-primary/40">ACTIVE</span>
@@ -244,33 +234,58 @@ export default function ChallengeDetail() {
                   <KeySquare size={18} className="text-primary" />
                 </div>
                 <div>
-                  <p className="font-mono font-bold text-sm text-white uppercase tracking-wider">Submit Flag</p>
-                  <p className="font-mono text-[11px] text-white/30 mt-0.5">Format: zerone{'{...}'}</p>
+                  <p className="font-mono font-bold text-sm text-white uppercase tracking-wider">
+                    {challenge.type === 'flag' ? 'Submit Flag' : 'Select Answer'}
+                  </p>
+                  <p className="font-mono text-[11px] text-white/30 mt-0.5">
+                    {challenge.type === 'flag' ? 'Format: zerone{...}' : 'Choose carefully'}
+                  </p>
                 </div>
               </div>
 
               {/* Form */}
               <form id="flag-form" onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="font-mono text-xs text-primary/50 uppercase tracking-widest block mb-2">
-                    &gt; Enter Payload:
-                  </label>
-                  <NeonInput
-                    placeholder="zerone{...}"
-                    value={flag}
-                    onChange={e => setFlag(e.target.value)}
-                    disabled={solved || submitting}
-                    required
-                    className="text-base tracking-wider"
-                  />
-                </div>
+                {challenge.type === 'flag' ? (
+                  <div>
+                    <label className="font-mono text-xs text-primary/50 uppercase tracking-widest block mb-2">
+                      &gt; Enter Payload:
+                    </label>
+                    <NeonInput
+                      placeholder="zerone{...}"
+                      value={flag}
+                      onChange={e => setFlag(e.target.value)}
+                      disabled={isSolved || submitting}
+                      required
+                      className="text-base tracking-wider"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {challenge.options?.map((opt, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setFlag(opt)}
+                        disabled={isSolved || submitting}
+                        className={cn(
+                          "w-full text-left px-4 py-3 rounded-lg border font-mono text-sm transition-all",
+                          flag === opt 
+                            ? "bg-primary/20 border-primary text-primary" 
+                            : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
+                        )}
+                      >
+                        {String.fromCharCode(65 + i)}. {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <AnimatedButton
                   type="submit"
-                  disabled={solved || submitting}
-                  className="w-full py-4"
+                  disabled={isSolved || submitting || (challenge.type === 'mcq' && !flag)}
+                  className="w-full py-4 uppercase tracking-widest"
                 >
-                  {submitting ? '[ VERIFYING... ]' : '[ EXECUTE PAYLOAD ]'}
+                  {submitting ? '[ VERIFYING... ]' : challenge.type === 'flag' ? '[ EXECUTE PAYLOAD ]' : '[ VERIFY OPTION ]'}
                 </AnimatedButton>
               </form>
 
@@ -278,24 +293,15 @@ export default function ChallengeDetail() {
               <div className="pt-4 border-t border-white/5">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-mono text-[10px] text-white/25 uppercase">Integrity Check</span>
-                  <span className="font-mono text-[10px] text-white/25">{attempts}/10 attempts</span>
+                  <span className="font-mono text-[10px] text-white/25">{attempts} attempts</span>
                 </div>
                 <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-success via-warning to-error rounded-full"
-                    style={{ width: `${(attempts / 10) * 100}%` }}
-                    animate={{ width: `${(attempts / 10) * 100}%` }}
-                    transition={{ duration: 0.3 }}
+                    className="h-full bg-primary rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, (attempts / 5) * 100)}%` }}
                   />
                 </div>
               </div>
-
-              {/* Solved state details */}
-              {solved && (
-                <div className="pt-4 border-t border-success/20 text-center space-y-2">
-                  <p className="font-mono text-xs text-success/70">Challenge completed successfully</p>
-                </div>
-              )}
             </div>
           </div>
         </motion.div>
@@ -330,7 +336,7 @@ export default function ChallengeDetail() {
 
               <p className="font-mono text-sm text-white/70 leading-relaxed mb-7">
                 Accessing this intel will deduct{' '}
-                <span className="font-black text-warning">{CHALLENGE.hintCost} pts</span>{' '}
+                <span className="font-black text-warning">{challenge.hint.cost} pts</span>{' '}
                 from your team's total score. This action cannot be undone.
               </p>
 

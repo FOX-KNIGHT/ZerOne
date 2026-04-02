@@ -1,17 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Lock, CheckCircle, Zap, ChevronRight, Search, Filter } from 'lucide-react'
+import { Lock, CheckCircle, Zap, ChevronRight, Search, Filter, Loader2 } from 'lucide-react'
 import { cn } from '../lib/utils'
-
-const DUMMY_CHALLENGES = [
-  { id: 1, title: 'Bypass Mainframe', type: 'CTF', points: 150, status: 'solved', difficulty: 'Hard', category: 'Exploit', solves: 12 },
-  { id: 2, title: 'Decrypt Payload', type: 'MCQ', points: 50, status: 'active', difficulty: 'Easy', category: 'Crypto', solves: 38 },
-  { id: 3, title: 'SQL Injection', type: 'CTF', points: 100, status: 'active', difficulty: 'Medium', category: 'Web', solves: 25 },
-  { id: 4, title: 'Overload Buffer', type: 'CTF', points: 200, status: 'locked', difficulty: 'Extreme', category: 'Pwn', solves: 3 },
-  { id: 5, title: 'Social Engineering', type: 'MCQ', points: 50, status: 'active', difficulty: 'Easy', category: 'OSINT', solves: 41 },
-  { id: 6, title: 'RSA Decoding', type: 'CTF', points: 175, status: 'active', difficulty: 'Hard', category: 'Crypto', solves: 8 },
-]
+import { useAppStore } from '../store/useAppStore'
 
 const DIFF_CONFIG = {
   Easy: { color: 'text-success', bg: 'bg-success', label: 'text-success', bar: 'w-1/4' },
@@ -21,8 +13,8 @@ const DIFF_CONFIG = {
 }
 
 const TYPE_COLOR = {
-  CTF: 'border-accent/30 text-accent bg-accent/10',
-  MCQ: 'border-primary/30 text-primary bg-primary/10',
+  flag: 'border-accent/30 text-accent bg-accent/10',
+  mcq: 'border-primary/30 text-primary bg-primary/10',
 }
 
 const STATUS_CONFIG = {
@@ -33,12 +25,28 @@ const STATUS_CONFIG = {
 
 export default function ChallengeList() {
   const navigate = useNavigate()
+  const { challenges, fetchChallenges, solvedChallenges, activeRound } = useAppStore()
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  const filtered = DUMMY_CHALLENGES.filter(c => {
+  useEffect(() => {
+    fetchChallenges().finally(() => setLoading(false))
+  }, [fetchChallenges])
+
+  // Map backend status based on solvedChallenges and activeRound
+  const processedChallenges = challenges.map(c => {
+    let status = 'active'
+    if (solvedChallenges.includes(c._id)) status = 'solved'
+    // If we're in a future round, we'll implement that logic later, 
+    // for now we trust the backend only returns challenges for the active round.
+    return { ...c, status, id: c._id } // map _id to id for component compatibility
+  })
+
+  const filtered = processedChallenges.filter(c => {
     const matchFilter = filter === 'all' || c.status === filter
-    const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || c.category.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) 
+      || (c.description && c.description.toLowerCase().includes(search.toLowerCase()))
     return matchFilter && matchSearch
   })
 
@@ -68,9 +76,9 @@ export default function ChallengeList() {
         {/* Stats row */}
         <div className="flex gap-4">
           {[
-            { label: 'Total', value: DUMMY_CHALLENGES.length, color: 'text-white' },
-            { label: 'Active', value: DUMMY_CHALLENGES.filter(c => c.status === 'active').length, color: 'text-accent' },
-            { label: 'Solved', value: DUMMY_CHALLENGES.filter(c => c.status === 'solved').length, color: 'text-success' },
+            { label: 'Total', value: processedChallenges.length, color: 'text-white' },
+            { label: 'Active', value: processedChallenges.filter(c => c.status === 'active').length, color: 'text-accent' },
+            { label: 'Solved', value: processedChallenges.filter(c => c.status === 'solved').length, color: 'text-success' },
           ].map(s => (
             <div key={s.label} className="text-center bg-black/50 border border-white/10 rounded-xl px-5 py-3">
               <p className={`font-heading font-black text-2xl ${s.color}`}>{s.value}</p>
@@ -79,6 +87,14 @@ export default function ChallengeList() {
           ))}
         </div>
       </motion.div>
+
+      {/* Loading state */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <Loader2 size={40} className="text-primary animate-spin" />
+          <p className="font-mono text-sm text-primary/50 animate-pulse">SYNCHRONIZING WITH SERVER...</p>
+        </div>
+      )}
 
       {/* Controls bar */}
       <div className="flex flex-col sm:flex-row gap-4">

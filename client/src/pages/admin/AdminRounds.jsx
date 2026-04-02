@@ -1,17 +1,21 @@
-import { useState } from 'react'
+import { Power, StopCircle, Clock, Radio, Zap, AlertTriangle, Timer, Users, Star, PlusCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { Power, StopCircle, Clock, Radio, Zap, AlertTriangle, Timer } from 'lucide-react'
 import { GlassCard } from '../../components/ui/GlassCard'
 import { AnimatedButton } from '../../components/ui/AnimatedButton'
 import { NeonInput } from '../../components/ui/NeonInput'
+import { useAppStore } from '../../store/useAppStore'
+import { useEffect, useState } from 'react'
+import api from '../../lib/axios'
 
-function CircularCountdown({ total = 3600, current = 3561 }) {
+function CircularCountdown({ total = 3600, current = 3600 }) {
+  const safeTotal = total > 0 ? total : 3600
+  const safeCurrent = Math.max(0, current)
   const radius = 90
   const circ = 2 * Math.PI * radius
-  const frac = current / total
+  const frac = safeCurrent / safeTotal
   const dash = circ * frac
-  const m = Math.floor(current / 60)
-  const s = current % 60
+  const m = Math.floor(safeCurrent / 60)
+  const s = safeCurrent % 60
   const isUrgent = frac < 0.2
 
   return (
@@ -74,15 +78,98 @@ function CircularCountdown({ total = 3600, current = 3561 }) {
 }
 
 export default function AdminRounds() {
-  const [roundName, setRoundName] = useState('Round 2: Exploitation')
+  const { startRound, endRound, activeRound, timeLeft, fetchActiveRound, registeredTeams, fetchTeams } = useAppStore()
+  const [roundNum, setRoundNum] = useState('1')
   const [duration, setDuration] = useState('3600')
-  const [isActive, setIsActive] = useState(true)
   const [broadcasting, setBroadcasting] = useState(false)
 
-  const handleActivate = () => {
+  // Section 2 manual point award state
+  const [selectedTeam, setSelectedTeam] = useState('')
+  const [pointDelta, setPointDelta]     = useState('')
+  const [pointReason, setPointReason]   = useState('')
+  const [awardMsg, setAwardMsg]         = useState('')
+  const [awarding, setAwarding]         = useState(false)
+
+  // Shortlist state
+  const [shortlisting, setShortlisting] = useState(false)
+  const [shortlistMsg, setShortlistMsg] = useState('')
+  const [shortlistN, setShortlistN]     = useState('10')
+
+  useEffect(() => {
+    fetchActiveRound()
+    fetchTeams()
+  }, [fetchActiveRound, fetchTeams])
+
+  const handleActivate = async () => {
     setBroadcasting(true)
-    setTimeout(() => setBroadcasting(false), 3000)
+    const { success } = await startRound(parseInt(roundNum), parseInt(duration))
+    if (success) {
+      setTimeout(() => setBroadcasting(false), 2000)
+    } else {
+      setBroadcasting(false)
+      alert("Failed to start round.")
+    }
   }
+
+  const handleHalt = async () => {
+    await endRound()
+  }
+
+  const handleAwardPoints = async () => {
+    if (!selectedTeam || !pointDelta) { setAwardMsg('Select team and enter points.'); return }
+    setAwarding(true)
+    setAwardMsg('')
+    try {
+      const token = localStorage.getItem('zerone-app-store')
+      const parsed = JSON.parse(token)
+      const authToken = parsed?.state?.token
+      const res = await fetch('http://localhost:5000/api/admin/team/adjust-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ teamId: selectedTeam, amount: parseInt(pointDelta) }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setAwardMsg(`✓ ${parseInt(pointDelta) > 0 ? '+' : ''}${pointDelta} pts awarded! ${pointReason ? `(${pointReason})` : ''}`)
+        setPointDelta(''); setPointReason(''); setSelectedTeam('')
+        fetchTeams()
+      } else {
+        setAwardMsg(`Error: ${data.message}`)
+      }
+    } catch (e) {
+      setAwardMsg('Network error')
+    } finally {
+      setAwarding(false)
+    }
+  }
+
+  const handleShortlist = async () => {
+    setShortlisting(true)
+    setShortlistMsg('')
+    try {
+      const token = localStorage.getItem('zerone-app-store')
+      const parsed = JSON.parse(token)
+      const authToken = parsed?.state?.token
+      const res = await fetch('http://localhost:5000/api/admin/shortlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ limit: parseInt(shortlistN) || 10 }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setShortlistMsg(`✓ Top ${data.teams?.length || shortlistN} teams shortlisted for Final Phase!`)
+        fetchTeams()
+      } else {
+        setShortlistMsg(`Error: ${data.message}`)
+      }
+    } catch (e) {
+      setShortlistMsg('Network error')
+    } finally {
+      setShortlisting(false)
+    }
+  }
+
+  const isActive = !!activeRound
 
   return (
     <div className="space-y-8">
@@ -113,12 +200,13 @@ export default function AdminRounds() {
             <div className="space-y-6">
               <div>
                 <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest block mb-2">
-                  Round Identifier
+                  Round Number
                 </label>
                 <NeonInput
-                  value={roundName}
-                  onChange={e => setRoundName(e.target.value)}
-                  placeholder="Round Name"
+                  type="number"
+                  value={roundNum}
+                  onChange={e => setRoundNum(e.target.value)}
+                  placeholder="1, 2, or 3"
                 />
               </div>
 
@@ -146,7 +234,8 @@ export default function AdminRounds() {
                 <AnimatedButton
                   variant="danger"
                   className="w-full gap-2"
-                  onClick={() => setIsActive(false)}
+                  onClick={handleHalt}
+                  disabled={!isActive}
                 >
                   <StopCircle size={15} />
                   HALT
@@ -192,27 +281,150 @@ export default function AdminRounds() {
               <span className="font-mono text-[10px] text-primary/50 uppercase tracking-widest">Global Timer Target</span>
             </div>
 
-            <CircularCountdown total={parseInt(duration) || 3600} current={3561} />
+            <CircularCountdown 
+              total={activeRound?.duration || parseInt(duration) || 3600} 
+              current={timeLeft !== null ? timeLeft : (activeRound?.duration || 0)} 
+            />
 
             <div className="mt-8 flex items-center gap-4">
               <div className="text-center">
-                <p className="font-mono text-2xl font-black text-primary text-glow">59</p>
+                <p className="font-mono text-2xl font-black text-primary text-glow">
+                  {timeLeft !== null ? Math.floor(timeLeft / 60) : '00'}
+                </p>
                 <p className="font-mono text-[9px] text-white/30 uppercase mt-0.5">minutes</p>
               </div>
               <span className="font-mono text-2xl text-white/20">:</span>
               <div className="text-center">
-                <p className="font-mono text-2xl font-black text-primary text-glow">21</p>
+                <p className="font-mono text-2xl font-black text-primary text-glow">
+                  {timeLeft !== null ? String(timeLeft % 60).padStart(2, '0') : '00'}
+                </p>
                 <p className="font-mono text-[9px] text-white/30 uppercase mt-0.5">seconds</p>
               </div>
             </div>
 
             <div className="mt-6 flex items-center gap-2 text-xs font-mono text-white/20">
               <Zap size={11} className="text-primary" />
-              <span>Round: <span className="text-white/50">{roundName}</span></span>
+              <span>Round: <span className="text-white/50">{activeRound ? `Round ${activeRound.roundNumber}` : 'STANDBY'}</span></span>
             </div>
           </GlassCard>
         </motion.div>
       </div>
+
+      {/* ─ Section 2 — Manual Point Award ─ */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <GlassCard>
+          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-yellow-500/15">
+            <PlusCircle size={15} className="text-yellow-400" />
+            <h2 className="font-mono font-bold text-sm uppercase tracking-widest text-white">Section 2 — Manual Point Award</h2>
+            <span className="ml-auto font-mono text-[10px] text-yellow-400/60 border border-yellow-500/20 px-2 py-0.5 rounded-full">Offline Round</span>
+          </div>
+
+          <p className="font-mono text-xs text-white/30 mb-6">
+            Section 2 is fully offline. Award or deduct points for teams based on their manual performance.
+            Use positive numbers to award (+50) or negative to deduct (-10).
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest block mb-2">Select Team</label>
+              <select
+                value={selectedTeam}
+                onChange={e => setSelectedTeam(e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-3 font-mono text-sm text-white focus:outline-none focus:border-primary/50 transition-all"
+              >
+                <option value="">-- Select Team --</option>
+                {registeredTeams.filter(t => !t.isDisqualified).map(t => (
+                  <option key={t._id} value={t._id}>{t.teamName} ({t.score} pts)</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest block mb-2">Points (+/-)</label>
+              <input
+                type="number"
+                placeholder="+50 or -10"
+                value={pointDelta}
+                onChange={e => setPointDelta(e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-3 font-mono text-sm text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest block mb-2">Reason (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. Q3 correct"
+                value={pointReason}
+                onChange={e => setPointReason(e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-3 font-mono text-sm text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-all"
+              />
+            </div>
+          </div>
+
+          {awardMsg && (
+            <p className={`mt-3 font-mono text-xs ${awardMsg.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
+              {awardMsg}
+            </p>
+          )}
+
+          <button
+            onClick={handleAwardPoints}
+            disabled={awarding || !selectedTeam || !pointDelta}
+            className="mt-4 px-6 py-3 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-mono text-sm rounded-lg hover:bg-yellow-500/20 transition-all disabled:opacity-40 flex items-center gap-2"
+          >
+            <PlusCircle size={13} />
+            {awarding ? 'Awarding...' : 'Award Points'}
+          </button>
+        </GlassCard>
+      </motion.div>
+
+      {/* ─ Final Phase — Shortlist Top 10 ─ */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        <GlassCard>
+          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-yellow-400/15">
+            <Star size={15} className="text-yellow-400" />
+            <h2 className="font-mono font-bold text-sm uppercase tracking-widest text-white">Final Phase — Shortlist Teams</h2>
+            <span className="ml-auto font-mono text-[10px] text-yellow-400/60 border border-yellow-500/20 px-2 py-0.5 rounded-full">After Section 3</span>
+          </div>
+
+          <p className="font-mono text-xs text-white/30 mb-6">
+            After Section 3 ends, shortlist the top N teams to qualify them for the Final Phase. 
+            This will lock out all other teams from the Final Phase page.
+            <span className="text-yellow-400 ml-1">Only use this once!</span>
+          </p>
+
+          <div className="flex gap-4 items-end flex-wrap">
+            <div>
+              <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest block mb-2">Number of Teams</label>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                value={shortlistN}
+                onChange={e => setShortlistN(e.target.value)}
+                className="w-32 bg-black/60 border border-white/10 rounded-lg px-3 py-3 font-mono text-sm text-white focus:outline-none focus:border-primary/50 transition-all"
+              />
+            </div>
+
+            <button
+              onClick={handleShortlist}
+              disabled={shortlisting}
+              className="px-6 py-3 bg-yellow-500/10 border border-yellow-400/40 text-yellow-400 font-mono text-sm rounded-lg hover:bg-yellow-500/20 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all disabled:opacity-40 flex items-center gap-2"
+            >
+              <Star size={13} />
+              {shortlisting ? 'Processing...' : `Shortlist Top ${shortlistN} Teams`}
+            </button>
+          </div>
+
+          {shortlistMsg && (
+            <p className={`mt-3 font-mono text-xs ${shortlistMsg.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
+              {shortlistMsg}
+            </p>
+          )}
+        </GlassCard>
+      </motion.div>
     </div>
   )
 }
+

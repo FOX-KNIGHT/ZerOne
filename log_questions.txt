@@ -1,0 +1,106 @@
+1. Which user repeatedly failed login attempts throughout the logs?
+
+A) User_09
+B) User_02
+C) User_14
+D) User_30
+
+2. Which IP address is associated with repeated failed logins?
+
+A) 192.168.1.32
+B) 192.168.1.11
+C) 192.168.1.59
+D) 192.168.1.45
+
+3. What does "LOGIN_SUCCESS" indicate?
+
+A) Failed login
+B) Unauthorized access
+C) Successful authentication
+D) System error
+
+4. Which action represents downloading a file?
+
+A) ACCESS_SETTINGS
+B) REQUEST_FILE
+C) DOWNLOAD
+D) UPLOAD_FILE
+
+5. What does "ACCESS_DENIED" mean?
+
+A) Access granted
+B) Login successful
+C) Permission restricted
+D) File uploaded
+
+🔐 SECTION B: Medium (Q6–Q10)
+6. Which user accessed "/admin_panel" but was denied?
+
+A) User_22
+B) User_28
+C) User_30
+D) All of the above
+
+7. What pattern is visible in User_02 activity?
+
+A) Frequent successful logins
+B) Repeated failed login attempts
+C) File downloads
+D) Upload activity
+
+8. Which type of action appears most frequently overall?
+
+A) ERROR
+B) WARN
+C) INFO
+D) DEBUG
+
+9. Which action indicates uploading data to the server?
+
+A) DOWNLOAD
+B) REQUEST_FILE
+C) UPLOAD_FILE
+D) ACCESS_REPORTS
+
+10. Which user performed both LOGIN_SUCCESS and ACCESS_DENIED actions?
+
+A) User_28
+B) User_13
+C) User_05
+D) All of the above
+
+⚡ SECTION C: Medium–Hard (Q11–Q15)
+11. What type of cyber attack is most likely indicated in the logs?
+
+A) Phishing
+B) SQL Injection
+C) Brute-force attack
+D) Malware
+
+12. Which resource is most frequently denied access?
+
+A) /admin_panel
+B) /root
+C) /secure_data
+D) All are frequent
+
+13. Which user appears multiple times performing DOWNLOAD actions?
+
+A) User_28
+B) User_04
+C) User_10
+D) All of the above
+
+14. What is the best way to analyze such logs efficiently?
+
+A) Read randomly
+B) Focus only on INFO logs
+C) Identify patterns and repeated entries
+D) Ignore timestamps
+
+15. Which behavior is most suspicious?
+
+A) Single login success
+B) Repeated login failures from same IP
+C) Accessing dashboard
+D) Downloading files

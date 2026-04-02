@@ -19,26 +19,54 @@ export const setupSocketListeners = () => {
     store.setSocketConnected(false);
   });
 
-  socket.on('scoreUpdate', (data) => {
-    store.updateScores(data);
+  // Server broadcasts these when admin starts/ends rounds
+  socket.on('startRound', (round) => {
+    store.setActiveRound(round);
   });
 
+  socket.on('endRound', () => {
+    store.setActiveRound(null);
+    store.updateTimer(null);
+  });
+
+  // Legacy events
   socket.on('roundActivated', (round) => {
     store.setActiveRound(round);
   });
 
-  socket.on('timerTick', (timeLeft) => {
-    store.updateTimer(timeLeft);
+  // Real-time score/leaderboard
+  socket.on('scoreUpdate', () => {
+    // Leaderboard page will re-fetch on this event
+  });
+
+  socket.on('liveLeaderboardUpdate', () => {
+    // Leaderboard page re-fetches
+  });
+
+  socket.on('leaderboard:update', () => {
+    // Round 2/3 score updated — pages re-fetch
+  });
+
+  socket.on('timerTick', ({ remainingTime, roundNumber }) => {
+    store.updateTimer(remainingTime);
+    // Keep activeRound in sync with the round number from the tick
+    const current = store.activeRound
+    if (!current || current.roundNumber !== roundNumber) {
+      store.setActiveRound({ roundNumber })
+    }
   });
 
   socket.on('recentSolve', (activity) => {
-    store.addRecentActivity(activity);
+    store.addRecentActivity({
+      team: activity.teamName,
+      challenge: activity.challengeTitle,
+      time: new Date(activity.timestamp).toLocaleTimeString(),
+    });
   });
 
   socket.on('forceLogout', ({ reason }) => {
     console.error('FORCE LOGOUT:', reason);
     store.setGlobalDisqualified(true, reason);
-    // AntiCheatWrapper will handle the countdown and navigation
   });
 };
 
