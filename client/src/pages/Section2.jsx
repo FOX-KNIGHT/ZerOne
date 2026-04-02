@@ -37,13 +37,13 @@ export default function Section2() {
         <GlassCard variant="hologram" className="p-8 text-center relative overflow-hidden min-h-[300px] flex flex-col justify-center items-center">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
 
-          {!activeRound ? (
+          {!activeRound || activeRound.roundNumber !== 2 ? (
             <div className="relative z-10 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full border border-yellow-400/20 flex items-center justify-center mb-4 animate-[pulse_2s_ease-in-out_Infinity]">
-                <Clock size={24} className="text-yellow-400/60" />
+              <div className="w-16 h-16 rounded-full border border-red-400/20 flex items-center justify-center mb-4 animate-[pulse_2s_ease-in-out_Infinity]">
+                <Clock size={24} className="text-red-400/60" />
               </div>
-              <p className="font-mono text-yellow-400/60 text-lg uppercase tracking-widest">Awaiting Round Start</p>
-              <p className="font-mono text-white/30 text-xs mt-2">Section 2 will begin when the administrator starts the round.</p>
+              <p className="font-mono text-red-400/60 text-lg uppercase tracking-widest">Access Restricted</p>
+              <p className="font-mono text-white/30 text-xs mt-2">Section 2 has not been started by the administrator yet.</p>
             </div>
           ) : (
             <div className="relative z-10 flex flex-col items-center w-full max-w-lg">

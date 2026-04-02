@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Terminal, CheckCircle2, XCircle, Send, ChevronUp, ChevronDown, Trophy, Zap, Eye, EyeOff } from 'lucide-react'
+import { Terminal, CheckCircle2, XCircle, Send, ChevronUp, ChevronDown, Trophy, Zap, Eye, EyeOff, Lock } from 'lucide-react'
 import api from '../lib/axios'
+import { useAppStore } from '../store/useAppStore'
 import { GlassCard } from '../components/ui/GlassCard'
 
 const SECTION_LABELS = { A: 'Section A — Easy (Q1–Q5)', B: 'Section B — Medium (Q6–Q10)', C: 'Section C — Hard (Q11–Q15)' }
@@ -15,7 +16,7 @@ function Terminal_Log({ log }) {
   const getColor = (line) => {
     if (line.includes('WARN')) return 'text-yellow-400'
     if (line.includes('ERROR')) return 'text-red-400'
-    if (line.includes('SYSTEM INTERNAL')) return 'text-cyan-300 font-bold'
+    if (line.includes('SYSTEM INTERNAL')) return 'text-red-400 font-bold'
     if (line.includes('INFO')) return 'text-green-300'
     return 'text-white/50'
   }
@@ -132,6 +133,7 @@ export default function Phase0Quiz() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [showAnswers, setShowAnswers] = useState(false)
+  const { activeRound } = useAppStore()
 
   useEffect(() => {
     api.get('/phase0/log').then(r => setLog(r.data.log)).catch(() => {})
@@ -176,11 +178,27 @@ export default function Phase0Quiz() {
 
   const sections = ['A', 'B', 'C']
 
+  if (!activeRound || activeRound.roundNumber !== 1) {
+    return (
+      <div className="max-w-2xl mx-auto py-20">
+        <GlassCard variant="hologram" className="text-center space-y-6">
+          <Lock size={48} className="text-red-400 mx-auto" style={{ filter: 'drop-shadow(0 0 12px rgba(255,68,68,0.4))' }} />
+          <div>
+            <p className="font-mono font-black text-2xl text-red-400 uppercase tracking-widest">Access Restricted</p>
+            <p className="font-mono text-sm text-white/40 mt-3">
+              Section 1 has not been started by the administrator yet.
+            </p>
+          </div>
+        </GlassCard>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 pb-12 max-w-5xl mx-auto">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="font-mono text-primary/40 text-xs uppercase tracking-widest mb-1">&gt; phase_00 / log_analysis</p>
+        <p className="font-mono text-primary/40 text-xs uppercase tracking-widest mb-1">&gt; section_01 / log_analysis</p>
         <h1 className="font-heading font-black text-4xl text-white">
           Log Analysis <span className="shimmer-text">Challenge</span>
         </h1>
@@ -299,7 +317,7 @@ export default function Phase0Quiz() {
               }`}
             >
               <Send size={14} />
-              {submitting ? 'Submitting...' : 'Submit Phase 0'}
+              {submitting ? 'Submitting...' : 'Submit Section 1'}
             </motion.button>
           </GlassCard>
         </motion.div>

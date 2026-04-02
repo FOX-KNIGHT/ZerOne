@@ -101,10 +101,9 @@ router.post('/submit', authenticate, async (req, res) => {
 // POST /api/final/shortlist — admin shortlists top 10 teams
 router.post('/shortlist', verifyAdmin, async (req, res) => {
   try {
-    // Get top 10 non-disqualified teams by score
+    // Get all non-disqualified teams by score
     const topTeams = await Team.find({ isDisqualified: false })
       .sort({ score: -1 })
-      .limit(10)
       .select('_id teamName score')
 
     const topIds = topTeams.map(t => t._id)

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Lightbulb, Lock, CheckCircle2, XCircle, Send, AlertTriangle, Trophy, Zap, Shield, Code2 } from 'lucide-react'
 import api from '../lib/axios'
+import { useAppStore } from '../store/useAppStore'
 import { GlassCard } from '../components/ui/GlassCard'
 
 const CATEGORY_ICONS = { Steganography: Shield, Encoding: Code2, Cryptography: Zap }
@@ -226,6 +227,7 @@ export default function Section3() {
   const [challenges, setChallenges] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const { activeRound } = useAppStore()
 
   const fetchChallenges = async () => {
     try {
@@ -264,6 +266,22 @@ export default function Section3() {
 
   const solved = challenges.filter(c => c.solved).length
 
+  if (!activeRound || activeRound.roundNumber !== 3) {
+    return (
+      <div className="max-w-2xl mx-auto py-20">
+        <GlassCard variant="hologram" className="text-center space-y-6">
+          <Lock size={48} className="text-red-400 mx-auto" style={{ filter: 'drop-shadow(0 0 12px rgba(255,68,68,0.4))' }} />
+          <div>
+            <p className="font-mono font-black text-2xl text-red-400 uppercase tracking-widest">Access Restricted</p>
+            <p className="font-mono text-sm text-white/40 mt-3">
+              Section 3 has not been started by the administrator yet.
+            </p>
+          </div>
+        </GlassCard>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 pb-12 max-w-4xl mx-auto">
       {/* Header */}
@@ -273,7 +291,7 @@ export default function Section3() {
           Cipher <span className="shimmer-text">Challenges</span>
         </h1>
         <p className="font-mono text-white/30 text-sm mt-2">
-          3 cipher challenges · Hints available (cost points) · Top 10 teams advance to Final Phase
+          3 cipher challenges · Hints available (cost points) · All teams advance to Final Phase
         </p>
 
         <div className="flex flex-wrap gap-3 mt-4">
@@ -284,7 +302,7 @@ export default function Section3() {
             Hints cost −10/−20/−30 pts
           </span>
           <span className="font-mono text-[10px] uppercase tracking-widest border border-cyan-500/20 px-3 py-1 rounded-full text-cyan-400">
-            Top 10 → Final Phase
+            All Teams → Final Phase
           </span>
         </div>
       </motion.div>
@@ -311,9 +329,9 @@ export default function Section3() {
       {/* Final phase info */}
       <GlassCard variant="hologram" className="text-center">
         <Trophy size={28} className="text-yellow-400 mx-auto mb-3" style={{ filter: 'drop-shadow(0 0 10px rgba(234,179,8,0.4))' }} />
-        <p className="font-mono font-bold text-white text-sm uppercase tracking-widest">Top 10 Teams Advance</p>
+        <p className="font-mono font-bold text-white text-sm uppercase tracking-widest">All Teams Advance</p>
         <p className="font-mono text-xs text-white/30 mt-2">
-          After this section ends, administrators will shortlist the top 10 teams by total score. Only they can access the Final Phase.
+          After this section ends, administrators will unlock the Final Phase. Everyone can access it.
         </p>
       </GlassCard>
     </div>

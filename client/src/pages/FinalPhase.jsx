@@ -64,10 +64,10 @@ export default function FinalPhase() {
           <div>
             <p className="font-mono font-black text-2xl text-red-400 uppercase tracking-widest">Access Restricted</p>
             <p className="font-mono text-sm text-white/40 mt-3">
-              Only the Top 10 shortlisted teams can access the Final Phase.
+              This phase has not been unlocked by the administrator yet.
             </p>
             <p className="font-mono text-xs text-white/25 mt-2">
-              Complete Section 2 & Section 3 to improve your ranking.
+              Please wait for the previous sections to conclude.
             </p>
           </div>
           <div className="p-3 bg-white/2 border border-white/8 rounded-lg inline-block">

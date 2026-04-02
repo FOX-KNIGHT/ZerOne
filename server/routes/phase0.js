@@ -186,7 +186,7 @@ router.post('/submit', authenticate, async (req, res) => {
     const existing = await Phase0Submission.findOne({ teamId })
     if (existing) {
       return res.status(409).json({
-        message: 'Already submitted Phase 0. Score: ' + existing.score,
+        message: 'Already submitted Section 1. Score: ' + existing.score,
         score:    existing.score,
         results:  existing.results,
         alreadySubmitted: true,
@@ -219,7 +219,7 @@ router.post('/submit', authenticate, async (req, res) => {
     req.app.get('io')?.emit('scoreUpdate')
 
     res.json({
-      message: `Phase 0 complete! You got ${correct}/15 correct.`,
+      message: `Section 1 complete! You got ${correct}/15 correct.`,
       correct,
       total:   15,
       score,

@@ -157,7 +157,7 @@ export default function AdminRounds() {
       })
       const data = await res.json()
       if (res.ok) {
-        setShortlistMsg(`✓ Top ${data.teams?.length || shortlistN} teams shortlisted for Final Phase!`)
+        setShortlistMsg(`✓ Final Phase unlocked for all teams!`)
         fetchTeams()
       } else {
         setShortlistMsg(`Error: ${data.message}`)
@@ -384,36 +384,23 @@ export default function AdminRounds() {
         <GlassCard>
           <div className="flex items-center gap-2 mb-6 pb-4 border-b border-yellow-400/15">
             <Star size={15} className="text-yellow-400" />
-            <h2 className="font-mono font-bold text-sm uppercase tracking-widest text-white">Final Phase — Shortlist Teams</h2>
+            <h2 className="font-mono font-bold text-sm uppercase tracking-widest text-white">Final Phase — Unlock</h2>
             <span className="ml-auto font-mono text-[10px] text-yellow-400/60 border border-yellow-500/20 px-2 py-0.5 rounded-full">After Section 3</span>
           </div>
 
           <p className="font-mono text-xs text-white/30 mb-6">
-            After Section 3 ends, shortlist the top N teams to qualify them for the Final Phase. 
-            This will lock out all other teams from the Final Phase page.
+            After Section 3 ends, use this to unlock the Final Phase for all teams.
             <span className="text-yellow-400 ml-1">Only use this once!</span>
           </p>
 
           <div className="flex gap-4 items-end flex-wrap">
-            <div>
-              <label className="font-mono text-[10px] text-white/40 uppercase tracking-widest block mb-2">Number of Teams</label>
-              <input
-                type="number"
-                min="1"
-                max="30"
-                value={shortlistN}
-                onChange={e => setShortlistN(e.target.value)}
-                className="w-32 bg-black/60 border border-white/10 rounded-lg px-3 py-3 font-mono text-sm text-white focus:outline-none focus:border-primary/50 transition-all"
-              />
-            </div>
-
             <button
               onClick={handleShortlist}
               disabled={shortlisting}
               className="px-6 py-3 bg-yellow-500/10 border border-yellow-400/40 text-yellow-400 font-mono text-sm rounded-lg hover:bg-yellow-500/20 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all disabled:opacity-40 flex items-center gap-2"
             >
               <Star size={13} />
-              {shortlisting ? 'Processing...' : `Shortlist Top ${shortlistN} Teams`}
+              {shortlisting ? 'Processing...' : `Unlock Final Phase for All Teams`}
             </button>
           </div>
 

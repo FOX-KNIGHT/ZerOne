@@ -59,7 +59,7 @@ function App() {
           <Route path="round1" element={<Round1 />} />
           <Route path="section2" element={<Section2 />} />
           <Route path="round3" element={<Round3 />} />
-          <Route path="phase0" element={<Phase0Quiz />} />
+          <Route path="section1" element={<Phase0Quiz />} />
           <Route path="section3" element={<Section3 />} />
           <Route path="final" element={<FinalPhase />} />
           <Route path="challenges" element={<ChallengeList />} />

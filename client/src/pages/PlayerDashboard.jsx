@@ -90,7 +90,7 @@ export default function PlayerDashboard() {
         const idx = teams.findIndex(t => t._id === user.teamId)
         setMyRank(idx >= 0 ? idx + 1 : null)
       }
-    }).catch(() => {})
+    }).catch(() => { })
   }, [user?.teamId, user?.score])
 
   // Fetch active round for timer max
@@ -109,20 +109,20 @@ export default function PlayerDashboard() {
   const [copied, setCopied] = useState(false)
   const copyCode = () => {
     if (!user?.teamCode) return
-    navigator.clipboard.writeText(user.teamCode).catch(() => {})
+    navigator.clipboard.writeText(user.teamCode).catch(() => { })
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const quickActions = [
     {
-      label: 'Phase 0 — Log Analysis Quiz',
+      label: 'Section 1 — Log Analysis Quiz',
       sub: '15 MCQs from system logs · +150 pts max',
-      path: '/phase0',
+      path: '/section1',
       icon: BookOpen,
       color: 'border-green-500/20 hover:border-green-500/50 hover:shadow-[0_0_20px_rgba(0,255,65,0.1)]',
       iconColor: 'text-green-400',
-      badge: 'PHASE 0',
+      badge: 'SECTION 1',
     },
     {
       label: 'Section 2 — Offline Round',
@@ -144,7 +144,7 @@ export default function PlayerDashboard() {
     },
     {
       label: 'Final Phase — Decryption',
-      sub: 'Top 10 shortlisted teams only',
+      sub: 'All qualified teams eligible',
       path: '/final',
       icon: KeyRound,
       color: 'border-yellow-400/20 hover:border-yellow-400/50 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)]',

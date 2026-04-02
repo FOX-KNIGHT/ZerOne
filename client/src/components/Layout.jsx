@@ -14,8 +14,8 @@ export default function Layout() {
   const navItems = [
     { name: 'Dashboard',  path: '/dashboard', icon: LayoutDashboard },
     { name: 'Leaderboard',path: '/leaderboard',icon: Trophy },
-    { name: 'Phase 0',    path: '/phase0',    icon: BookOpen },
-    { name: 'Section 2',  path: '/dashboard', icon: Cpu,      badge: 'Offline' },
+    { name: 'Section 1',  path: '/section1',  icon: BookOpen },
+    { name: 'Section 2',  path: '/section2',  icon: Cpu,      badge: 'Offline' },
     { name: 'Section 3',  path: '/section3',  icon: Terminal },
     { name: 'Final',      path: '/final',     icon: KeyRound },
   ]
