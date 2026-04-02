@@ -6,7 +6,8 @@ const teamSchema = new mongoose.Schema({
   password: { type: String, required: true },
   members: [{ type: String }],
   score: { type: Number, default: 0 },
-  currentRound: { type: Number, default: 1 }
+  currentRound: { type: Number, default: 1 },
+  isDisqualified: { type: Boolean, default: false }
 }, { timestamps: true })
 
 teamSchema.pre('save', async function (next) {

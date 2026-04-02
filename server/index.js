@@ -8,7 +8,11 @@ import authRoutes from './routes/auth.js'
 import challengeRoutes from './routes/challenges.js'
 import submissionRoutes from './routes/submissions.js'
 import leaderboardRoutes from './routes/leaderboard.js'
+import analyticsRoutes from './routes/analytics.js'
+import displayRoutes from './routes/display.js'
+import adminRoutes from './routes/admin.js'
 import { initSocket } from './socket/index.js'
+import { startTimerService } from './services/timerService.js'
 
 dotenv.config()
 
@@ -27,12 +31,15 @@ app.use('/api/auth', authRoutes)
 app.use('/api/challenges', challengeRoutes)
 app.use('/api/submissions', submissionRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
+app.use('/api/admin/analytics', analyticsRoutes)
+app.use('/api/display', displayRoutes)
+app.use('/api/admin', adminRoutes)
 
 initSocket(io)
-
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected')
+    startTimerService(io)
     httpServer.listen(process.env.PORT || 5000, () => {
       console.log(`Server running on port ${process.env.PORT || 5000}`)
     })
