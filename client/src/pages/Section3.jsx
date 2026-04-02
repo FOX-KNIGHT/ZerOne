@@ -175,7 +175,7 @@ function ChallengeCard({ challenge, onUnlockHint, onSubmit }) {
                       className="flex-1 bg-black/60 border border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-all"
                       placeholder="Type your answer..."
                       value={answer}
-                      onChange={e => setAnswer(e.target.value)}
+                      onChange={e => setAnswer(e.target.value.toUpperCase())}
                       onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                     />
                     <button
