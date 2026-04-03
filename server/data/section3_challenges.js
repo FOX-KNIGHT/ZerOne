@@ -60,9 +60,9 @@ In the system log, count how many times "LOGIN_FAILED" appears — that is your 
 What is the decrypted word?`,
     answer: 'GHOST',
     hints: [
-      'Count all the WARN log entries in the 150-line system log — they all say LOGIN_FAILED.',
-      'There are 20 LOGIN_FAILED entries in the log. So the shift key is 20. Shift each letter back by 20.',
-      'MREVY shifted back 20: M→G, R→H, E→O, V→S, Y→T. The answer is GHOST.',
+      'The log file is not a real file, but a hidden HTML comment inside the puzzle description itself! Right-click the problem text and Inspect it.',
+      'Check inside the <pre> tag in the HTML source code. You will see a green HTML comment with 20 LOGIN_FAILED entries.',
+      'MREVY shifted backward by 20 (since there are 20 entries): M→G, R→H, E→O, V→S, Y→T. Answer: GHOST.',
     ],
   },
 ]

@@ -4,7 +4,7 @@ import { ExternalLink, Lock, Unlock, Send, CheckCircle2, XCircle, Trophy, Zap, K
 import api from '../lib/axios'
 import { GlassCard } from '../components/ui/GlassCard'
 
-const DRIVE_LINK = 'https://drive.google.com/drive/folders/1TKlIICGs34qqtXILCUrXO5PSy4fDsHP_?usp=drive_link'
+const DRIVE_LINK = 'https://drive.google.com/drive/folders/1ORbHPZMyayuDebXMXQQ9FuLv8Z5zTHeQ'
 
 export default function FinalPhase() {
   const [access, setAccess] = useState(null)     // { shortlisted, teamName, score }

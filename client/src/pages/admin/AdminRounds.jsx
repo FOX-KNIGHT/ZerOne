@@ -102,6 +102,15 @@ export default function AdminRounds() {
 
   const handleActivate = async () => {
     setBroadcasting(true)
+
+    // Secret trigger: entering 4 activates Final Phase
+    if (parseInt(roundNum) === 4) {
+      await handleShortlist()
+      alert('Final Phase successfully unlocked for all teams!')
+      setTimeout(() => setBroadcasting(false), 2000)
+      return
+    }
+
     const { success } = await startRound(parseInt(roundNum), parseInt(duration))
     if (success) {
       setTimeout(() => setBroadcasting(false), 2000)
@@ -379,38 +388,7 @@ export default function AdminRounds() {
         </GlassCard>
       </motion.div>
 
-      {/* ─ Final Phase — Shortlist Top 10 ─ */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-        <GlassCard>
-          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-yellow-400/15">
-            <Star size={15} className="text-yellow-400" />
-            <h2 className="font-mono font-bold text-sm uppercase tracking-widest text-white">Final Phase — Unlock</h2>
-            <span className="ml-auto font-mono text-[10px] text-yellow-400/60 border border-yellow-500/20 px-2 py-0.5 rounded-full">After Section 3</span>
-          </div>
 
-          <p className="font-mono text-xs text-white/30 mb-6">
-            After Section 3 ends, use this to unlock the Final Phase for all teams.
-            <span className="text-yellow-400 ml-1">Only use this once!</span>
-          </p>
-
-          <div className="flex gap-4 items-end flex-wrap">
-            <button
-              onClick={handleShortlist}
-              disabled={shortlisting}
-              className="px-6 py-3 bg-yellow-500/10 border border-yellow-400/40 text-yellow-400 font-mono text-sm rounded-lg hover:bg-yellow-500/20 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all disabled:opacity-40 flex items-center gap-2"
-            >
-              <Star size={13} />
-              {shortlisting ? 'Processing...' : `Unlock Final Phase for All Teams`}
-            </button>
-          </div>
-
-          {shortlistMsg && (
-            <p className={`mt-3 font-mono text-xs ${shortlistMsg.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
-              {shortlistMsg}
-            </p>
-          )}
-        </GlassCard>
-      </motion.div>
     </div>
   )
 }

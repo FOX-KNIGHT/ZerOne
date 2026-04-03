@@ -146,7 +146,37 @@ function ChallengeCard({ challenge, onUnlockHint, onSubmit }) {
                 <p className="font-mono text-[10px] text-white/30 uppercase tracking-widest mb-3 flex items-center gap-2">
                   <Zap size={10} /> Challenge Brief
                 </p>
-                <pre className="font-mono text-xs text-white/70 whitespace-pre-wrap leading-relaxed">{challenge.description}</pre>
+                <pre className="font-mono text-xs text-white/70 whitespace-pre-wrap leading-relaxed">
+                  {challenge.description}
+                  {challenge.index === 2 && (
+                    <span dangerouslySetInnerHTML={{ __html: `<!--
+[SYSTEM LOG]
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+WARN: LOGIN_FAILED
+-->` }} />
+                  )}
+                </pre>
               </div>
 
               {/* Hints */}
@@ -155,15 +185,19 @@ function ChallengeCard({ challenge, onUnlockHint, onSubmit }) {
                   <Lightbulb size={10} /> Purchasable Hints
                   <span className="text-white/20 ml-1">— costs deducted from your total score</span>
                 </p>
-                {challenge.hints.map(hint => (
-                  <HintButton
-                    key={hint.level}
-                    hint={hint}
-                    challengeIndex={challenge.index}
-                    onUnlock={onUnlockHint}
-                    disabled={challenge.solved}
-                  />
-                ))}
+                {challenge.hints.map((hint, idx) => {
+                  const prevHint = idx > 0 ? challenge.hints[idx - 1] : null
+                  const isLockedByPrev = prevHint && !prevHint.unlocked
+                  return (
+                    <HintButton
+                      key={hint.level}
+                      hint={hint}
+                      challengeIndex={challenge.index}
+                      onUnlock={onUnlockHint}
+                      disabled={challenge.solved || isLockedByPrev}
+                    />
+                  )
+                })}
               </div>
 
               {/* Submit */}
@@ -284,6 +318,7 @@ export default function Section3() {
 
   return (
     <div className="space-y-6 pb-12 max-w-4xl mx-auto">
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <p className="font-mono text-primary/40 text-xs uppercase tracking-widest mb-1">&gt; section_03 / cipher_labs</p>
