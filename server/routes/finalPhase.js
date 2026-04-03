@@ -66,6 +66,7 @@ router.post('/submit', authenticate, async (req, res) => {
 
       await Team.findByIdAndUpdate(teamId, {
         $inc: { score: pts },
+        $set: { lastScoreUpdatedAt: new Date() },
         finalSubmitted: true,
         finalRank: correctSubmissionCount,
       })
@@ -103,7 +104,7 @@ router.post('/shortlist', verifyAdmin, async (req, res) => {
   try {
     // Get all non-disqualified teams by score
     const topTeams = await Team.find({ isDisqualified: false })
-      .sort({ score: -1 })
+      .sort({ score: -1, lastScoreUpdatedAt: 1 })
       .select('_id teamName score')
 
     const topIds = topTeams.map(t => t._id)
@@ -126,7 +127,7 @@ router.post('/shortlist', verifyAdmin, async (req, res) => {
 router.get('/shortlist', verifyAdmin, async (req, res) => {
   try {
     const teams = await Team.find({ isShortlisted: true })
-      .sort({ score: -1 })
+      .sort({ score: -1, lastScoreUpdatedAt: 1 })
       .select('teamName score finalRank finalSubmitted')
     res.json(teams)
   } catch (err) {

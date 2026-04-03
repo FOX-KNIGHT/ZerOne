@@ -8,6 +8,6 @@ export const loginLimiter = rateLimit({
 
 export const submissionLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 30, // Limit each IP to 30 submissions per minute
+  max: 100, // Limit each IP to 100 submissions per minute
   message: { message: 'Too many submissions, please wait a minute' }
 })

@@ -92,7 +92,10 @@ router.post('/team/adjust-score', roleBasedAccess(['superadmin']), async (req, r
     const { teamId, amount } = req.body
     const team = await Team.findByIdAndUpdate(
       teamId,
-      { $inc: { score: amount } },
+      { 
+        $inc: { score: amount },
+        $set: { lastScoreUpdatedAt: new Date() }
+      },
       { new: true }
     )
     req.app.get('io').emit('scoreUpdate')
@@ -108,7 +111,10 @@ router.post('/team/adjust-round2-score', roleBasedAccess(['superadmin']), async 
     // Section 2 grading should add to BOTH overall 'score' and 'round2Score' tracking
     const team = await Team.findByIdAndUpdate(
       teamId,
-      { $inc: { score: amount, round2Score: amount } },
+      { 
+        $inc: { score: amount, round2Score: amount },
+        $set: { lastScoreUpdatedAt: new Date() }
+      },
       { new: true }
     )
     req.app.get('io').emit('scoreUpdate')
@@ -167,7 +173,7 @@ router.post('/shortlist', roleBasedAccess(['superadmin', 'judge']), async (req, 
     const limit = parseInt(req.body.limit) || 10
 
     const topTeams = await Team.find({ isDisqualified: false })
-      .sort({ score: -1 })
+      .sort({ score: -1, lastScoreUpdatedAt: 1 })
       .limit(limit)
       .select('_id teamName score')
 

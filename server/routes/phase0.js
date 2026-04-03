@@ -211,7 +211,10 @@ router.post('/submit', authenticate, async (req, res) => {
     // Award points to team
     const team = await Team.findByIdAndUpdate(
       teamId,
-      { $inc: { score } },
+      { 
+        $inc: { score },
+        $set: { lastScoreUpdatedAt: new Date() }
+      },
       { new: true }
     )
 

@@ -130,7 +130,10 @@ router.post('/submit', authenticate, async (req, res) => {
         { upsert: true, new: true }
       )
       // Award points
-      await Team.findByIdAndUpdate(teamId, { $inc: { score: challenge.points, round3Score: challenge.points } })
+      await Team.findByIdAndUpdate(teamId, { 
+        $inc: { score: challenge.points, round3Score: challenge.points },
+        $set: { lastScoreUpdatedAt: new Date() }
+      })
       req.app.get('io')?.emit('scoreUpdate')
 
       return res.json({

@@ -15,7 +15,7 @@ router.get('/live', async (req, res) => {
     }
 
     const topTeams = await Team.find()
-      .sort({ score: -1 })
+      .sort({ score: -1, lastScoreUpdatedAt: 1 })
       .limit(5)
       .select('teamName score')
 

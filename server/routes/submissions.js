@@ -9,21 +9,17 @@ import { submissionLimiter } from '../middleware/rateLimiter.js'
 const router = express.Router()
 
 router.post('/', submissionLimiter, authenticate, async (req, res) => {
-  const session = await mongoose.startSession()
-  let result = null
-
   try {
-    await session.withTransaction(async () => {
       const { challengeId, answer, hintUsed } = req.body
       const teamId = req.team.teamId
 
       // Check already submitted
-      const existing = await Submission.findOne({ teamId, challengeId }).session(session)
-      if (existing) {
+      const existing = await Submission.findOne({ teamId, challengeId })
+      if (existing && existing.isCorrect) {
         throw new Error('Already submitted')
       }
 
-      const challenge = await Challenge.findById(challengeId).session(session)
+      const challenge = await Challenge.findById(challengeId)
       if (!challenge) {
         throw new Error('Challenge not found')
       }
@@ -33,30 +29,42 @@ router.post('/', submissionLimiter, authenticate, async (req, res) => {
         ? challenge.points - (hintUsed ? challenge.hint?.cost || 0 : 0)
         : 0
 
-      const [submission] = await Submission.create([{
-        teamId, challengeId, isCorrect, hintUsed, pointsAwarded
-      }], { session })
+      if (isCorrect) {
+        await Submission.findOneAndUpdate(
+          { teamId, challengeId },
+          { isCorrect: true, hintUsed, pointsAwarded },
+          { upsert: true }
+        )
+      } else {
+        await Submission.findOneAndUpdate(
+          { teamId, challengeId },
+          { isCorrect: false, pointsAwarded: 0 },
+          { upsert: true }
+        )
+      }
 
       // Update team score
       let updatedTeam = null
       if (isCorrect) {
         updatedTeam = await Team.findByIdAndUpdate(
           teamId,
-          { $inc: { score: pointsAwarded } },
-          { new: true, session }
+          { 
+            $inc: { score: pointsAwarded },
+            $set: { lastScoreUpdatedAt: new Date() }
+          },
+          { new: true }
         )
       }
 
-      result = {
+      let result = {
         isCorrect,
         pointsAwarded,
         message: isCorrect ? 'Correct!' : 'Wrong answer',
         teamName: updatedTeam ? updatedTeam.teamName : null,
         challengeTitle: challenge.title
       }
-    })
 
-    // Transaction succeeded, emit events
+    // Database updates succeeded, emit events
     const io = req.app.get('io')
     if (result.isCorrect) {
       io.emit('scoreUpdate')
@@ -82,11 +90,9 @@ router.post('/', submissionLimiter, authenticate, async (req, res) => {
     if (err.message === 'Challenge not found') return res.status(404).json({ message: 'Challenge not found' })
     if (err.code === 11000) return res.status(400).json({ message: 'Already submitted' })
     
-    // If transaction unsupported due to standalone mongo, fallback:
+    // If anything unsupported throws:
     console.error('Submission error:', err.message)
     res.status(500).json({ message: err.message })
-  } finally {
-    session.endSession()
   }
 })
 

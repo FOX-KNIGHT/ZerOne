@@ -7,7 +7,7 @@ router.get('/', async (req, res) => {
   try {
     const teams = await Team.find()
       .select('teamName score members')
-      .sort({ score: -1 })
+      .sort({ score: -1, lastScoreUpdatedAt: 1 })
     res.json(teams)
   } catch (err) {
     res.status(500).json({ message: err.message })

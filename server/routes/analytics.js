@@ -14,7 +14,7 @@ router.get('/overview', async (req, res) => {
     const totalTeams = await Team.countDocuments()
     const totalSubmissions = await Submission.countDocuments()
     
-    const maxScoreTeam = await Team.findOne().sort({ score: -1 }).select('score')
+    const maxScoreTeam = await Team.findOne().sort({ score: -1, lastScoreUpdatedAt: 1 }).select('score')
     const highestScore = maxScoreTeam ? maxScoreTeam.score : 0
 
     const avgScoreResult = await Team.aggregate([
@@ -74,6 +74,7 @@ router.get('/teams', async (req, res) => {
         $project: {
           teamName: "$team.teamName",
           score: "$team.score",
+          lastScoreUpdatedAt: "$team.lastScoreUpdatedAt",
           accuracy: {
             $multiply: [
               { $divide: ["$correctSubmissions", { $max: ["$totalSubmissions", 1] }] },
@@ -83,7 +84,7 @@ router.get('/teams', async (req, res) => {
           hintsUsed: "$totalHintsUsed"
         }
       },
-      { $sort: { score: -1 } }
+      { $sort: { score: -1, lastScoreUpdatedAt: 1 } }
     ])
 
     res.json(teamAnalytics)

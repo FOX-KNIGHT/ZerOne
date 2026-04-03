@@ -21,6 +21,7 @@ const teamSchema = new mongoose.Schema({
   isShortlisted:   { type: Boolean, default: false },   // qualified for Final Phase
   finalSubmitted:  { type: Boolean, default: false },   // submitted Final Phase answers
   finalRank:       { type: Number, default: null },      // order of correct final submission
+  lastScoreUpdatedAt: { type: Date, default: Date.now }, // Tie-breaker for leaderboard
 }, { timestamps: true })
 
 // Hash password before save
