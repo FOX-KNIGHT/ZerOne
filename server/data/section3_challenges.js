@@ -45,24 +45,22 @@ What is the decoded word?`,
   },
   {
     index: 2,
-    title: 'The Shift Cipher',
+    title: 'The Number Code',
     category: 'Cryptography',
     points: 100,
     difficulty: 'Easy',
-    description: `A message has been encrypted using a Caesar cipher with an unknown shift. 
-Your job is to find the shift value and decrypt the message.
+    description: `Each letter of the alphabet has been replaced by its corresponding number (A=1, B=2, C=3, and so on).
 
-ENCRYPTED: MREVY
+Decode the following sequence to find the secret word:
 
-The shift value can be found by looking at the log file: 
-In the system log, count how many times "LOGIN_FAILED" appears — that is your shift key.
+8 - 1 - 3 - 11 - 5 - 18
 
-What is the decrypted word?`,
-    answer: 'GHOST',
+What is the decoded word?`,
+    answer: 'HACKER',
     hints: [
-      'The log file is not a real file, but a hidden HTML comment inside the puzzle description itself! Right-click the problem text and Inspect it.',
-      'Check inside the <pre> tag in the HTML source code. You will see a green HTML comment with 20 LOGIN_FAILED entries.',
-      'MREVY shifted backward by 20 (since there are 20 entries): M→G, R→H, E→O, V→S, Y→T. Answer: GHOST.',
+      'Look at the alphabet. The 1st letter is A, the 2nd is B. What is the 8th letter?',
+      'The first letter (8) is H and the second letter (1) is A.',
+      'The numbers map exactly to H-A-C-K-E-R.',
     ],
   },
 ]

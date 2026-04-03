@@ -8,7 +8,7 @@ import { GlassCard } from '../components/ui/GlassCard'
 const CATEGORY_ICONS = { Steganography: Shield, Encoding: Code2, Cryptography: Zap }
 const DIFFICULTY_COLORS = { Easy: 'text-green-400 border-green-500/30 bg-green-500/8', Medium: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/8', Hard: 'text-red-400 border-red-500/30 bg-red-500/8' }
 const HINT_PERCENT = { 1: '30%', 2: '50%', 3: '70%' }
-const HINT_COSTS   = { 1: 10, 2: 20, 3: 30 }
+const HINT_COSTS = { 1: 10, 2: 20, 3: 30 }
 
 function HintButton({ hint, challengeIndex, onUnlock, disabled }) {
   const [confirming, setConfirming] = useState(false)
@@ -148,34 +148,6 @@ function ChallengeCard({ challenge, onUnlockHint, onSubmit }) {
                 </p>
                 <pre className="font-mono text-xs text-white/70 whitespace-pre-wrap leading-relaxed">
                   {challenge.description}
-                  {challenge.index === 2 && (
-                    <span dangerouslySetInnerHTML={{ __html: `<!--
-[SYSTEM LOG]
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
-WARN: LOGIN_FAILED
--->` }} />
-                  )}
                 </pre>
               </div>
 
@@ -228,11 +200,10 @@ WARN: LOGIN_FAILED
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className={`flex items-center gap-2 p-3 rounded-lg border font-mono text-xs ${
-                          result.correct
+                        className={`flex items-center gap-2 p-3 rounded-lg border font-mono text-xs ${result.correct
                             ? 'border-green-500/40 bg-green-500/8 text-green-400'
                             : 'border-red-500/30 bg-red-500/8 text-red-400'
-                        }`}
+                          }`}
                       >
                         {result.correct ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
                         {result.message}
